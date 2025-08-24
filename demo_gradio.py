@@ -471,7 +471,7 @@ with block:
             with gr.Group():
                 lora_file = gr.File(label="LoRA File", file_count="single", type="filepath")
                 lora_multiplier = gr.Slider(label="LoRA Multiplier", minimum=0.0, maximum=1.0, value=0.8, step=0.1)
-                fp8_optimization = gr.Checkbox(label="FP8 Optimization", value=False)
+                fp8_optimization = gr.Checkbox(label="FP8 Optimization", value=True)
 
         with gr.Column():
             preview_image = gr.Image(label="Next Latents", height=200, visible=False)
