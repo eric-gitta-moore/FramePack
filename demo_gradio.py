@@ -38,6 +38,7 @@ parser.add_argument("--server", type=str, default='0.0.0.0')
 parser.add_argument("--port", type=int, required=False)
 parser.add_argument("--inbrowser", action='store_true')
 parser.add_argument("--output_dir", type=str, default='./outputs')
+parser.add_argument("--offline", action='store_true')
 args = parser.parse_args()
 
 # for win desktop probably use --server 127.0.0.1 --inbrowser
@@ -54,14 +55,31 @@ high_vram = free_mem_gb > 60
 print(f'Free VRAM {free_mem_gb} GB')
 print(f'High-VRAM Mode: {high_vram}')
 
-text_encoder = LlamaModel.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='text_encoder', torch_dtype=torch.float16).cpu()
-text_encoder_2 = CLIPTextModel.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='text_encoder_2', torch_dtype=torch.float16).cpu()
-tokenizer = LlamaTokenizerFast.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='tokenizer')
-tokenizer_2 = CLIPTokenizer.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='tokenizer_2')
-vae = AutoencoderKLHunyuanVideo.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='vae', torch_dtype=torch.float16).cpu()
+if args.offline:
+    HF_CACHE_HUB_PATH = os.path.join(os.environ['HF_HOME'], 'hub')
+    HUNYUAN_VIDEO_LOCAL_PATH = os.path.join(HF_CACHE_HUB_PATH, 'models--hunyuanvideo-community--HunyuanVideo')
+    FLUX_REDUX_LOCAL_PATH = os.path.join(HF_CACHE_HUB_PATH, 'models--lllyasviel--flux_redux_bfl')
+    FRAMEPACK_I2V_HY_LOCAL_PATH = os.path.join(HF_CACHE_HUB_PATH, 'models--lllyasviel--FramePackI2V_HY')
+ 
+    text_encoder = LlamaModel.from_pretrained(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots'))[0], 'text_encoder'), torch_dtype=torch.float16).cpu()
+    text_encoder_2 = CLIPTextModel.from_pretrained(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots'))[0], 'text_encoder_2'), torch_dtype=torch.float16).cpu()
+    tokenizer = LlamaTokenizerFast.from_pretrained(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots'))[0], 'tokenizer'))
+    tokenizer_2 = CLIPTokenizer.from_pretrained(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots'))[0], 'tokenizer_2'))
+    vae = AutoencoderKLHunyuanVideo.from_pretrained(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots'))[0], 'vae'), torch_dtype=torch.float16).cpu()
+ 
+    feature_extractor = SiglipImageProcessor.from_pretrained(os.path.join(FLUX_REDUX_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(FLUX_REDUX_LOCAL_PATH, 'snapshots'))[0], 'feature_extractor'))
+    image_encoder = SiglipVisionModel.from_pretrained(os.path.join(FLUX_REDUX_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(FLUX_REDUX_LOCAL_PATH, 'snapshots'))[0], 'image_encoder'), torch_dtype=torch.float16).cpu()
 
-feature_extractor = SiglipImageProcessor.from_pretrained("lllyasviel/flux_redux_bfl", subfolder='feature_extractor')
-image_encoder = SiglipVisionModel.from_pretrained("lllyasviel/flux_redux_bfl", subfolder='image_encoder', torch_dtype=torch.float16).cpu()
+    transformer = HunyuanVideoTransformer3DModelPacked.from_pretrained(os.path.join(FRAMEPACK_I2V_HY_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(FRAMEPACK_I2V_HY_LOCAL_PATH, 'snapshots'))[0]), torch_dtype=torch.bfloat16).cpu()
+else:
+    text_encoder = LlamaModel.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='text_encoder', torch_dtype=torch.float16).cpu()
+    text_encoder_2 = CLIPTextModel.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='text_encoder_2', torch_dtype=torch.float16).cpu()
+    tokenizer = LlamaTokenizerFast.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='tokenizer')
+    tokenizer_2 = CLIPTokenizer.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='tokenizer_2')
+    vae = AutoencoderKLHunyuanVideo.from_pretrained("hunyuanvideo-community/HunyuanVideo", subfolder='vae', torch_dtype=torch.float16).cpu()
+
+    feature_extractor = SiglipImageProcessor.from_pretrained("lllyasviel/flux_redux_bfl", subfolder='feature_extractor')
+    image_encoder = SiglipVisionModel.from_pretrained("lllyasviel/flux_redux_bfl", subfolder='image_encoder', torch_dtype=torch.float16).cpu()
 
 transformer = None  # load later
 transformer_dtype = torch.bfloat16
