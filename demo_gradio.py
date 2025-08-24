@@ -39,7 +39,7 @@ parser.add_argument("--server", type=str, default='0.0.0.0')
 parser.add_argument("--port", type=int, required=False)
 parser.add_argument("--inbrowser", action='store_true')
 parser.add_argument("--output_dir", type=str, default='./outputs')
-parser.add_argument("--offline", default=True, action='store_true')
+parser.add_argument("--offline", default=True)
 args = parser.parse_args()
 
 # for win desktop probably use --server 127.0.0.1 --inbrowser
@@ -61,13 +61,13 @@ if args.offline:
     HUNYUAN_VIDEO_LOCAL_PATH = os.path.join(HF_CACHE_HUB_PATH, 'models--hunyuanvideo-community--HunyuanVideo')
     FLUX_REDUX_LOCAL_PATH = os.path.join(HF_CACHE_HUB_PATH, 'models--lllyasviel--flux_redux_bfl')
     FRAMEPACK_I2V_HY_LOCAL_PATH = os.path.join(HF_CACHE_HUB_PATH, 'models--lllyasviel--FramePackI2V_HY')
- 
+
     text_encoder = LlamaModel.from_pretrained(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots'))[0], 'text_encoder'), torch_dtype=torch.float16).cpu()
     text_encoder_2 = CLIPTextModel.from_pretrained(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots'))[0], 'text_encoder_2'), torch_dtype=torch.float16).cpu()
     tokenizer = LlamaTokenizerFast.from_pretrained(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots'))[0], 'tokenizer'))
     tokenizer_2 = CLIPTokenizer.from_pretrained(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots'))[0], 'tokenizer_2'))
     vae = AutoencoderKLHunyuanVideo.from_pretrained(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(HUNYUAN_VIDEO_LOCAL_PATH, 'snapshots'))[0], 'vae'), torch_dtype=torch.float16).cpu()
- 
+
     feature_extractor = SiglipImageProcessor.from_pretrained(os.path.join(FLUX_REDUX_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(FLUX_REDUX_LOCAL_PATH, 'snapshots'))[0], 'feature_extractor'))
     image_encoder = SiglipVisionModel.from_pretrained(os.path.join(FLUX_REDUX_LOCAL_PATH, 'snapshots', os.listdir(os.path.join(FLUX_REDUX_LOCAL_PATH, 'snapshots'))[0], 'image_encoder'), torch_dtype=torch.float16).cpu()
 
@@ -464,7 +464,7 @@ with block:
                 rs = gr.Slider(label="CFG Re-Scale", minimum=0.0, maximum=1.0, value=0.0, step=0.01, visible=False)  # Should not change
 
                 # This is only used when high_vram is False
-                gpu_memory_preservation = gr.Slider(label="GPU Inference Preserved Memory (GB) (larger means slower)", minimum=6, maximum=128, value=6, step=0.1, info="Set this number to a larger value if you encounter OOM. Larger value causes slower speed.", visible=not high_vram)
+                gpu_memory_preservation = gr.Slider(label="GPU Inference Preserved Memory (GB) (larger means slower)", minimum=0, maximum=128, value=6, step=0.1, info="Set this number to a larger value if you encounter OOM. Larger value causes slower speed.", visible=not high_vram)
 
                 mp4_crf = gr.Slider(label="MP4 Compression", minimum=0, maximum=100, value=16, step=1, info="Lower means better quality. 0 is uncompressed. Change to 16 if you get black outputs. ")
 
